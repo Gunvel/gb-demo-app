@@ -8,7 +8,7 @@ export class NewsService {
   newsGetter;
 
   constructor() {
-    this.newsGetter = this.generateArrayNews; //memoize(this.generateArrayNews);
+    this.newsGetter = memoize(this.generateArrayNews);
   }
 
   private generateArrayNews() {
