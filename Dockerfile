@@ -16,7 +16,7 @@ RUN npm ci
 
 COPY ./ ./
 # RUN npm run test
-RUN npm run build
+RUN npm run build:api
 RUN npm prune --production
 
 ####
