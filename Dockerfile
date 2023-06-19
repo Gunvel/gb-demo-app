@@ -31,4 +31,4 @@ COPY --from=build-stage /opt/$APPLICATION_NAME/node_modules /opt/$APPLICATION_NA
 EXPOSE 3333
 
 # Run with --restart=on-failure
-CMD su -c "node ./apps/api/main.js"
+CMD su -c "node ./dist/apps/api/main.js"
