@@ -32,4 +32,4 @@ COPY --from=build-stage /opt/$APPLICATION_NAME/dist/ /opt/$APPLICATION_NAME/star
 EXPOSE 3333
 
 # Run with --restart=on-failure
-CMD ["./start.sh"]
+CMD su -c "node ./apps/api/main.js"
