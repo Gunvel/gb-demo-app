@@ -1,43 +1,54 @@
-import { Injectable } from "@nestjs/common";
-import { CreateNewsDto } from "./news.controller";
-import memoize from "lodash.memoize";
+import { Inject, Injectable } from "@nestjs/common";
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { News, NewsDocument } from './schemas/news.schema';
+import { NewsDTO } from "./dto/news-dto";
+import { EditNewsDTO } from "./dto/edit-news-dto";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class NewsService {
+  constructor(
+    @InjectModel(News.name) private readonly model: Model<NewsDocument>,
+    @Inject(CACHE_MANAGER) private cacheService: Cache) {}
 
-  newsGetter;
+    private async _getsetCache<TParams, TValue>(cacheName: string, params: TParams, apiCallBack: (params: TParams) => Promise<TValue>): Promise<TValue> {
+      const cacheValue = await this.cacheService.get<TValue>(cacheName);
 
-  constructor() {
-    this.newsGetter = memoize(this.generateArrayNews);
-  }
+      if (cacheValue)
+        return cacheValue;
 
-  private generateArrayNews() {
-    return Object.keys([...Array(20)])
-      .map(key => Number(key) + 1)
-      .map(n => ({
-        id: n,
-        title: `Важная новость ${n}`,
-        description: (rand => ([...Array(rand(1000))].map(() => rand(10 ** 16).toString(36).substring(rand(10))).join(' ')))(max => Math.ceil(Math.random() * max)),
-        createdAt: Date.now()
-      }))
-  }
+      const value = await apiCallBack(params);
+      await this.cacheService.set(cacheName, value, 60);
 
-  async getNews() {
-    return new Promise(resolve => {
-      const news = this.newsGetter();
+      return value;
+    }
 
-      setTimeout(() => {
-        resolve(news);
-      }, 100)
-    });
-  }
+    async getNews() {
+      return await this._getsetCache('allNews', null, async () => {
+        return await this.model.find().exec();
+      });
+    }
 
-  async create(peaceOfNews: CreateNewsDto) {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log('Новость успешно создана', peaceOfNews);
-        resolve({ id: Math.ceil(Math.random() * 1000), ...peaceOfNews });
-      }, 100)
-    });
-  }
+    async findOne(id: string): Promise<News> {
+      return await this._getsetCache(`news-${id}`, id, async (id) => {
+        return await this.model.findById(id).exec();
+      });
+    }
+
+    async create(newsDto: NewsDTO): Promise<News> {
+      return await new this.model({
+        ...newsDto,
+        createdAt: new Date(),
+      }).save();
+    }
+
+    async update(id: string, newsDto: EditNewsDTO): Promise<News> {
+      return await this.model.findByIdAndUpdate(id, newsDto).exec();
+    }
+
+    async delete(id: string): Promise<News> {
+      return await this.model.findByIdAndDelete(id).exec();
+    }
 }

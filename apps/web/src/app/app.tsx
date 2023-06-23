@@ -4,6 +4,7 @@ import NxWelcome from './nx-welcome';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import News from './news/news';
 import CreateNews from './create-news/create-news';
+import Authors from './authors/authors';
 
 export function App() {
   return (
@@ -25,6 +26,9 @@ export function App() {
           <li>
             <Link to="/create">Добавить новость</Link>
           </li>
+          <li>
+            <Link to="/authors">Рейтинг авторов</Link>
+          </li>
         </ul>
       </div>
       <Routes>
@@ -39,6 +43,10 @@ export function App() {
           <Route
             path="/create"
             element={<CreateNews />}
+          />
+          <Route
+            path="/authors"
+            element={<Authors />}
           />
           {/* END: routes */}
         </Routes>
